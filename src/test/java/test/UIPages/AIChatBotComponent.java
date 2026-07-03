@@ -10,21 +10,15 @@ import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
-public class AIChatBotPage extends BasePage {
+public class AIChatBotComponent extends BrandsPage {
 
-    private final String PAGE_URL = "https://stg-ui.adcint.com/ad-intelligence/brand";
-
-
-    private final SelenideElement SIDE_MENU = $("app-sidebar");
-    private final SelenideElement ERROR_PAGE = $("app-error-page");
-    private final SelenideElement SPINNER = $(".loading-spinner");
     private final SelenideElement CHATBOT_INPUT = $("textarea[data-unit='textarea']");
     private final SelenideElement SEND_BUTTON = $("button[data-unit='submit-btn']");
     private final ElementsCollection ASSISTANT_MESSAGES = $$("chatbot-card[data-unit='assistant-message']");
     private final SelenideElement LAST_ASSISTANT_MESSAGE = $("chatbot-card[data-unit='assistant-message']:last-of-type");
     private final SelenideElement ASSISTANT_MARKDOWN = LAST_ASSISTANT_MESSAGE.$("[data-unit='markdown-content']");
 
-    public AIChatBotPage checkPageHasNoBlockingErrors() {
+    public AIChatBotComponent checkPageHasNoBlockingErrors() {
         SPINNER.should(disappear);
         ERROR_PAGE.shouldNot(exist);
 
@@ -35,7 +29,7 @@ public class AIChatBotPage extends BasePage {
         return this;
     }
 
-    public AIChatBotPage shouldHaveAssistantResponseReady() {
+    public AIChatBotComponent shouldHaveAssistantResponseReady() {
 
         ASSISTANT_MESSAGES.shouldHave(CollectionCondition.sizeGreaterThan(0), Duration.ofSeconds(20));
         LAST_ASSISTANT_MESSAGE.shouldBe(visible);
@@ -47,14 +41,14 @@ public class AIChatBotPage extends BasePage {
         return this;
     }
 
-    public AIChatBotPage checkChatbotIsAvailable() {
+    public AIChatBotComponent checkChatbotIsAvailable() {
 
         CHATBOT_INPUT.shouldBe(visible, Duration.ofSeconds(30))
                 .click();
         return this;
     }
 
-    public AIChatBotPage sendMessage(String message) {
+    public AIChatBotComponent sendMessage(String message) {
 
         CHATBOT_INPUT.setValue(message);
         SEND_BUTTON.click();
@@ -62,7 +56,7 @@ public class AIChatBotPage extends BasePage {
         return this;
     }
 
-    public AIChatBotPage waitForAssistantResponse() {
+    public AIChatBotComponent waitForAssistantResponse() {
         ASSISTANT_MESSAGES.shouldHave(
                 CollectionCondition.sizeGreaterThan(0),
                 Duration.ofSeconds(30)

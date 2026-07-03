@@ -15,10 +15,10 @@ import static com.codeborne.selenide.WebDriverConditions.urlContaining;
 
 public class BrandsPage extends BasePage {
 
-    private final String PAGE_URL = "https://stg-ui.adcint.com/ad-intelligence/brand";
+    final String PAGE_URL = "https://stg-ui.adcint.com/ad-intelligence/brand";
 
     private final ElementsCollection REPORT_CARDS = $$("report-card");
-    private final SelenideElement SIDE_MENU = $("app-sidebar");
+    final SelenideElement SIDE_MENU = $("app-sidebar");
     private final ElementsCollection MENU_ITEMS = $$("[data-userflow='sidebar-menu-item-title']");
 
     private static final String REPORT_TITLE = ".title";
@@ -27,8 +27,8 @@ public class BrandsPage extends BasePage {
     private static final String SAVE_BUTTON = ".btn-save";
     private static final String COUNTRY_FLAG = "img.country";
 
-    private final SelenideElement ERROR_PAGE = $("app-error-page");
-    private final SelenideElement SPINNER = $(".loading-spinner");
+    final SelenideElement ERROR_PAGE = $("app-error-page");
+    final SelenideElement SPINNER = $(".loading-spinner");
 
     public BrandsPage checkReportCardsAreDisplayed() {
         REPORT_CARDS.shouldHave(CollectionCondition.sizeGreaterThan(0));

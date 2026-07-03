@@ -2,6 +2,8 @@ package test.UIPages;
 
 import com.codeborne.selenide.SelenideElement;
 
+import java.time.Duration;
+
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 
@@ -18,6 +20,7 @@ public class LoginPage extends BasePage {
         PASSWORD_INPUT.shouldBe(visible).setValue(password);
         LOGIN_BUTTON.shouldBe(visible).click();
 
+        $("app-sidebar").shouldBe(visible, Duration.ofSeconds(30));
     }
 
     @Override

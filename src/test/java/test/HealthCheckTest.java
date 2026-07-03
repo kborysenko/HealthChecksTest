@@ -2,7 +2,7 @@ package test;
 
 import org.junit.jupiter.api.Tag;
 
-import test.UIPages.AIChatBotPage;
+import test.UIPages.AIChatBotComponent;
 import test.UIPages.BrandsPage;
 import test.ui.SeleniumSetup;
 import org.junit.jupiter.api.Test;
@@ -13,8 +13,7 @@ public class HealthCheckTest extends SeleniumSetup {
 
     @Tag("healthcheck")
     @Test
-    void verifyAdIntelligenceBrandsPageIsOperational() throws InterruptedException {
-        Thread.sleep(10000);
+    void verifyAdIntelligenceBrandsPageIsOperational() {
         open(BrandsPage.class)
                 .checkSideMenuIsAvailable()
                 .checkReportCardsAreDisplayed()
@@ -24,9 +23,8 @@ public class HealthCheckTest extends SeleniumSetup {
 
     @Tag("healthcheck")
     @Test
-    void verifyChatbotIsOperational() throws InterruptedException {
-        Thread.sleep(10000);
-        open(AIChatBotPage.class)
+    void verifyChatbotIsOperational() {
+        open(AIChatBotComponent.class)
                 .checkChatbotIsAvailable()
                 .sendMessage("test")
                 .waitForAssistantResponse()
