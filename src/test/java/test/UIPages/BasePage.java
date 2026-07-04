@@ -7,10 +7,12 @@ import java.util.Collections;
 import java.util.Map;
 
 public abstract class BasePage {
+
     public static <PageObjectClass extends BasePage> PageObjectClass navigate(Class<PageObjectClass> pageObjectClass) {
         return navigate(pageObjectClass, Collections.emptyMap());
     }
 
+    @SafeVarargs
     public static <PageObjectClass extends BasePage> PageObjectClass navigate(Class<PageObjectClass> pageObjectClass, Map<String, String>... parameters) {
         PageObjectClass page = initialize(pageObjectClass);
         Selenide.open(page.createUrl());
@@ -21,6 +23,7 @@ public abstract class BasePage {
         return verify(navigate(pageObjectClass, Collections.emptyMap()));
     }
 
+    @SafeVarargs
     public static <PageObjectClass extends BasePage> PageObjectClass open(Class<PageObjectClass> pageObjectClass, Map<String, String>... params) {
         return verify(navigate(pageObjectClass, params));
     }
@@ -40,11 +43,11 @@ public abstract class BasePage {
     }
 
     protected static <PageObjectClass extends BasePage> PageObjectClass verify(PageObjectClass page) {
-        if (page.isValid()) {
-            return page;
-        } else {
-            throw new IllegalStateException("Page wasn't initialized");
+        if (!page.isValid()) {
+            throw new IllegalStateException(
+                    page.getClass().getSimpleName() + " did not load as expected — its health signal is missing");
         }
+        return page;
     }
 
     protected abstract String createUrl();

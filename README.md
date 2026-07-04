@@ -1,75 +1,119 @@
-HealthChecksTest
+# UI System Healthcheck
 
-Automated UI health check framework with scheduled execution and optional email notifications.
+Automated, smoke-level UI healthchecks for two product areas of the Ad Intelligence app:
 
-Prerequisites
+1. **Ad Intelligence · Brands module** — navigation present, reports offered as working entry points, no blocking errors, and drilling into a report actually navigates.
+2. **AI Chatbot · "Ask anything…"** — the input is usable, a prompt can be sent, and a real (non-placeholder) assistant answer renders back.
 
-1. Install required tools via Homebrew:
+Each check goes beyond "the page loaded" and exercises the feature the way a user would, so a green run means the feature is genuinely usable. Built to run repeatedly on a schedule, inside a Docker container, and to alert (Slack + email) the moment a feature is down.
 
-- brew install openjdk
-- brew install maven
-- brew install msmtp
+- **Stack:** Java 17 · [Selenide](https://selenide.org/) (Selenium) · JUnit 5 · Allure
+- **Driver:** resolved automatically by Selenium Manager (no local driver install)
 
-2. Verify:
+---
 
-- java -version
-- mvn -version
-- msmtp --version
+## Prerequisites
 
-Launch Steps
+- **Docker** (the only requirement to run it) — Chrome + Java + Maven all live in the image.
+- For local (non-Docker) runs: JDK 17 and Maven, plus Chrome installed.
 
-1. Download and build project
+---
 
-2. Move to parent directory (if needed)
-If you opened project in IDE terminal:
-cd ..
+## Quick start (Docker)
 
-3. Create project archive
-   zip -r HealthChecksTest.zip HealthChecksTest \
-   -x "HealthChecksTest/.git/*" \
-   -x "HealthChecksTest/target/*" \
-   -x "HealthChecksTest/build/*" \
-   -x "HealthChecksTest/allure-results/*" \
-   -x "HealthChecksTest/.idea/*" \
-   -x "HealthChecksTest/*.iml" \
-   -x "HealthChecksTest/.DS_Store"
+```bash
+# 1. Configure an environment (target + credentials + optional alert secrets)
+cp envs/staging.env.example envs/staging.env
+$EDITOR envs/staging.env
 
-4. Unzip project to test folder
-   unzip HealthChecksTest.zip -d test-run
+# 2. Build the image  (Apple Silicon: add  --platform linux/amd64)
+docker build -t ui-healthcheck .
 
-5. Go to project folder
-   cd test-run/HealthChecksTest
+# 3. Run the healthcheck
+docker run --rm --env-file envs/staging.env -v "$PWD/target:/app/target" ui-healthcheck
+```
 
-6. Run installer
-   ./install.sh
+Or with Compose:
 
-7. Verify cron job
+```bash
+docker compose run --rm healthcheck
+```
 
-- Check if cron was installed:
-- crontab -l
+The container runs the tests headless, exits `0` on success / non-zero on failure, and on failure sends alerts (see [Notifications](#failure-notifications)). Reports and failure screenshots land in `target/`.
 
-8. Test email sending (optional)
+---
 
-If email is enabled:
-echo "hello test" | msmtp --file=./.msmtprc your@gmail.com
+## Local run (without Docker)
 
-9. Check execution logs
-   cat /Users/user/healthcheck-runner/healthcheck.log
+```bash
+cp config.properties.example src/test/resources/config.properties   # then fill in
+$EDITOR src/test/resources/config.properties
 
-======================
+mvn test                 # runs only the @Tag("healthcheck") tests
+mvn allure:serve         # open the HTML report
+```
 
-What happens after setup
+Config is read from **environment variables first**, then `config.properties`, so you can also just:
 
-Every 15 minutes cron will:
+```bash
+APP_URL=https://stg-ui.adcint.com APP_USERNAME=... APP_PASSWORD=... mvn test
+```
 
-- run UI tests
-- validate application health
-- optionally send email on failure
+---
 
-Notes
-.msmtprc must have correct permissions:
-chmod 600 .msmtprc
-Gmail requires App Password, not normal password
+## Configuration & multiple environments
 
+All configuration is injected at runtime — **nothing sensitive is committed**.
 
+| Env var | `config.properties` key | Meaning |
+|---|---|---|
+| `APP_URL` | `app.url` | Base URL under test |
+| `APP_USERNAME` | `app.username` | Login email |
+| `APP_PASSWORD` | `app.password` | Login password |
+| `HEADLESS` | `selenide.headless` | Headless Chrome (default `true`) |
 
+Each environment is just its own env file: copy `envs/staging.env.example` to `envs/staging.env`, `envs/prod.env`, etc. (all gitignored), and select one with `--env-file`.
+
+---
+
+## Failure notifications
+
+On failure the container notifies over **both** channels, each enabled only if its variables are set (so either or both work):
+
+- **Slack** — set `SLACK_WEBHOOK_URL` (an [incoming webhook](https://api.slack.com/messaging/webhooks)). Webhooks can't carry files, so Slack gets the alert text plus a CI-run link (when running in GitHub Actions).
+- **Email** — set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, `EMAIL_TO` (Gmail needs an App Password). The email attaches the failure **screenshots** and a plaintext **test summary**, and **links** the full Allure report. Gmail blocks HTML/JS attachments (`552 5.7.0`), so the report is linked — not attached — by default. Set `ALLURE_ATTACH=true` (optionally `ALLURE_ZIP_PASSWORD`, default `healthcheck`) to attach it as a password-protected zip that bypasses the scan. Sent by `notify_email.py`; supports SMTPS (`465`) and STARTTLS (`587`).
+
+Notification lives in `docker-entrypoint.sh`, which captures the test exit code and alerts *after* the run — so a failing test always triggers an alert. On failure it generates the Allure report (`mvn allure:report`) for the CI artifact / link (and for the optional attach mode).
+
+### Testing notifications
+
+Alerts fire whenever the test run exits non-zero, so you can emulate a failure just by pointing at a bad target. Keep it tidy with a throwaway env file (same shape as the compose flow):
+
+```bash
+cp envs/staging.env.example envs/failtest.env   # set a bad APP_URL
+docker run --rm --platform linux/amd64 --env-file envs/failtest.env ui-healthcheck
+```
+
+Login navigation fails → tests error → both configured channels notify → the container exits `1`.
+
+Tips:
+- To inspect the alert without spamming a real channel, point `SLACK_WEBHOOK_URL` at a [`webhook.site`](https://webhook.site) URL (live inspector) or `https://httpbin.org/post` (echoes the payload to the run log).
+- Email uses SMTPS (implicit TLS, port `465`) — a Gmail **App Password** works out of the box.
+
+---
+
+## Reports & screenshots
+
+- **Allure** report: `mvn allure:serve` (or `mvn allure:report` → `target/site/allure-maven-plugin`).
+- **Screenshot + page source on failure** are captured while the browser is still open (`ScreenshotOnFailure` JUnit 5 extension), attached to the Allure report, and written to `target/screenshots/`.
+- Surefire results: `target/surefire-reports/`.
+
+---
+
+## CI & scheduling
+
+- **GitHub Actions** (`.github/workflows/healthcheck.yml`) builds and runs the image every 30 min (`schedule`) and on demand (`workflow_dispatch`), pulling credentials from repo **secrets** and uploading screenshots/reports as artifacts on failure.
+- **Self-hosted alternative** — schedule the container with host cron:
+  ```
+  */30 * * * * docker run --rm --env-file /path/envs/staging.env ui-healthcheck >> /var/log/uihealthcheck.log 2>&1
+  ```

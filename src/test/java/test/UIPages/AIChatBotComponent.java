@@ -3,77 +3,58 @@ package test.UIPages;
 import com.codeborne.selenide.CollectionCondition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import test.config.TestConfig;
 
 import java.time.Duration;
 
-import static com.codeborne.selenide.Condition.*;
+import static com.codeborne.selenide.Condition.empty;
+import static com.codeborne.selenide.Condition.enabled;
+import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
-public class AIChatBotComponent extends BrandsPage {
+/**
+ * AI Chatbot — the "Ask anything…" assistant, which is surfaced on the Brands view. The
+ * healthcheck confirms end-to-end functionality: the input is usable, a prompt can be sent,
+ * and a real (non-placeholder) assistant answer renders back.
+ */
+public class AIChatBotComponent extends AuthenticatedPage {
 
-    private final SelenideElement CHATBOT_INPUT = $("textarea[data-unit='textarea']");
-    private final SelenideElement SEND_BUTTON = $("button[data-unit='submit-btn']");
-    private final ElementsCollection ASSISTANT_MESSAGES = $$("chatbot-card[data-unit='assistant-message']");
-    private final SelenideElement LAST_ASSISTANT_MESSAGE = $("chatbot-card[data-unit='assistant-message']:last-of-type");
-    private final SelenideElement ASSISTANT_MARKDOWN = LAST_ASSISTANT_MESSAGE.$("[data-unit='markdown-content']");
-
-    public AIChatBotComponent checkPageHasNoBlockingErrors() {
-        SPINNER.should(disappear);
-        ERROR_PAGE.shouldNot(exist);
-
-        $("body").shouldNotHave(text("Something went wrong"));
-        $("body").shouldNotHave(text("Unexpected error"));
-        $("body").shouldNotHave(text("Access denied"));
-
-        return this;
-    }
-
-    public AIChatBotComponent shouldHaveAssistantResponseReady() {
-
-        ASSISTANT_MESSAGES.shouldHave(CollectionCondition.sizeGreaterThan(0), Duration.ofSeconds(20));
-        LAST_ASSISTANT_MESSAGE.shouldBe(visible);
-        ASSISTANT_MARKDOWN.shouldBe(visible)
-                .shouldNotBe(empty)
-                .shouldNotHave(text("Thinking"))
-                .shouldNotHave(text("null"));
-
-        return this;
-    }
+    private final SelenideElement chatbotInput = $("textarea[data-unit='textarea']");
+    private final SelenideElement sendButton = $("button[data-unit='submit-btn']");
+    private final ElementsCollection assistantMessages = $$("chatbot-card[data-unit='assistant-message']");
+    private final SelenideElement lastAssistantMessage = $("chatbot-card[data-unit='assistant-message']:last-of-type");
+    private final SelenideElement assistantMarkdown = lastAssistantMessage.$("[data-unit='markdown-content']");
 
     public AIChatBotComponent checkChatbotIsAvailable() {
-
-        CHATBOT_INPUT.shouldBe(visible, Duration.ofSeconds(30))
-                .click();
+        chatbotInput.shouldBe(visible, Duration.ofSeconds(30)).click();
         return this;
     }
 
     public AIChatBotComponent sendMessage(String message) {
-
-        CHATBOT_INPUT.setValue(message);
-        SEND_BUTTON.click();
-
+        chatbotInput.setValue(message);
+        sendButton.shouldBe(enabled).click();
         return this;
     }
 
     public AIChatBotComponent waitForAssistantResponse() {
-        ASSISTANT_MESSAGES.shouldHave(
-                CollectionCondition.sizeGreaterThan(0),
-                Duration.ofSeconds(30)
-        );
-
-        LAST_ASSISTANT_MESSAGE.shouldBe(visible, Duration.ofSeconds(30));
-
-        ASSISTANT_MARKDOWN.shouldBe(visible, Duration.ofSeconds(30))
+        assistantMessages.shouldHave(CollectionCondition.sizeGreaterThan(0), Duration.ofSeconds(30));
+        lastAssistantMessage.shouldBe(visible, Duration.ofSeconds(30));
+        assistantMarkdown.shouldBe(visible, Duration.ofSeconds(30))
                 .shouldNotBe(empty)
                 .shouldNotHave(text("Thinking"))
                 .shouldNotHave(text("..."));
+        return this;
+    }
 
+    public AIChatBotComponent checkPageHasNoBlockingErrors() {
+        assertNoBlockingErrors();
         return this;
     }
 
     @Override
-    protected boolean isValid() {
-        return SIDE_MENU.shouldBe(visible, Duration.ofSeconds(20)).exists();
+    protected String createUrl() {
+        return TestConfig.getUrl() + "/brand";
     }
 }

@@ -1,0 +1,6 @@
+# Local-development fallback for `mvn test`.
+# Copy to src/test/resources/config.properties (gitignored) and fill in.
+# In Docker/CI, prefer the APP_* environment variables instead of this file.
+app.url=https://stg-ui.adcint.com
+app.username=you@example.com
+app.password=change-me

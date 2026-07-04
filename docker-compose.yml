@@ -1,0 +1,8 @@
+services:
+  healthcheck:
+    build: .
+    image: ui-healthcheck:latest
+    env_file:
+      - envs/staging.env
+    volumes:
+      - ./target:/app/target

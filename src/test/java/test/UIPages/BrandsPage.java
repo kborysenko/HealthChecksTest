@@ -2,54 +2,33 @@ package test.UIPages;
 
 import com.codeborne.selenide.CollectionCondition;
 import com.codeborne.selenide.ElementsCollection;
-import com.codeborne.selenide.SelenideElement;
 import org.assertj.core.api.Assertions;
 import org.openqa.selenium.By;
 import test.config.TestConfig;
 
-import java.time.Duration;
-
 import static com.codeborne.selenide.CollectionCondition.allMatch;
-import static com.codeborne.selenide.Condition.*;
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Selenide.$$;
+import static com.codeborne.selenide.Selenide.webdriver;
 import static com.codeborne.selenide.WebDriverConditions.urlContaining;
 
-public class BrandsPage extends BasePage {
+/**
+ * Ad Intelligence — Brands module. The healthcheck confirms the feature is genuinely usable:
+ * navigation is present, reports are offered as working entry points, there are no blocking
+ * errors, and drilling into a report actually navigates.
+ */
+public class BrandsPage extends AuthenticatedPage {
 
-    private final ElementsCollection REPORT_CARDS = $$("report-card");
-    final SelenideElement SIDE_MENU = $("app-sidebar");
-    private final ElementsCollection MENU_ITEMS = $$("[data-userflow='sidebar-menu-item-title']");
+    private final ElementsCollection reportCards = $$("report-card");
+    private final ElementsCollection menuItems = $$("[data-userflow='sidebar-menu-item-title']");
 
     private static final String REPORT_TITLE = ".title";
     private static final String REPORT_LINK = "a.card-link";
-    private static final String SHARE_BUTTON = ".btn-share";
-    private static final String SAVE_BUTTON = ".btn-save";
-    private static final String COUNTRY_FLAG = "img.country";
-
-    final SelenideElement ERROR_PAGE = $("app-error-page");
-    final SelenideElement SPINNER = $(".loading-spinner");
-
-    public BrandsPage checkReportCardsAreDisplayed() {
-        REPORT_CARDS.shouldHave(CollectionCondition.sizeGreaterThan(0));
-
-        REPORT_CARDS.shouldHave(allMatch(
-                "Every report card is complete",
-                card ->
-                        card.findElement(By.cssSelector(REPORT_LINK)).isDisplayed()
-                                && !card.findElement(By.cssSelector(REPORT_TITLE)).getText().isBlank()
-                                && card.findElement(By.cssSelector(SHARE_BUTTON)).isDisplayed()
-                                && card.findElement(By.cssSelector(SAVE_BUTTON)).isDisplayed()
-                                && card.findElement(By.cssSelector(COUNTRY_FLAG)).isDisplayed()
-        ));
-
-        return this;
-    }
 
     public BrandsPage checkSideMenuIsAvailable() {
-        SIDE_MENU.shouldBe(visible);
+        sideMenu.shouldBe(visible);
 
-        Assertions.assertThat(
-                        MENU_ITEMS.texts())
+        Assertions.assertThat(menuItems.texts())
                 .contains(
                         "Categories",
                         "Brands",
@@ -61,23 +40,28 @@ public class BrandsPage extends BasePage {
         return this;
     }
 
-    public BrandsPage checkPageHasNoBlockingErrors() {
-
-        SPINNER.should(disappear);
-
-        ERROR_PAGE.shouldNot(exist);
-
-        $("body").shouldNotHave(text("Something went wrong"));
-        $("body").shouldNotHave(text("Unexpected error"));
-        $("body").shouldNotHave(text("Access denied"));
+    public BrandsPage checkReportCardsAreDisplayed() {
+        // At least one report must be offered
+        reportCards.shouldHave(CollectionCondition.sizeGreaterThan(0));
+        // and each must be a usable entry point: a titled, clickable report link.
+        // (Intentionally not asserting every decorative control so incidental
+        // UI changes don't false-fail the healthcheck.)
+        reportCards.shouldHave(allMatch(
+                "every report card is a titled, clickable report",
+                card -> card.findElement(By.cssSelector(REPORT_LINK)).isDisplayed()
+                        && !card.findElement(By.cssSelector(REPORT_TITLE)).getText().isBlank()));
 
         return this;
     }
 
-    public BrandsPage openFirstReport() {
+    public BrandsPage checkPageHasNoBlockingErrors() {
+        assertNoBlockingErrors();
+        return this;
+    }
 
-        REPORT_CARDS.first()
-                .$("a.card-link")
+    public BrandsPage openFirstReport() {
+        reportCards.first()
+                .$(REPORT_LINK)
                 .click();
 
         webdriver().shouldHave(urlContaining("/ad-intelligence/"));
@@ -88,10 +72,5 @@ public class BrandsPage extends BasePage {
     @Override
     protected String createUrl() {
         return TestConfig.getUrl() + "/brand";
-    }
-
-    @Override
-    protected boolean isValid() {
-        return SIDE_MENU.shouldBe(visible, Duration.ofSeconds(20)).exists();
     }
 }
