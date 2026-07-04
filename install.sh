@@ -11,7 +11,7 @@ mkdir -p "$INSTALL_DIR"
 
 echo "Copying project..."
 
-# Copy only needed files
+# Copy project
 cp -R src "$INSTALL_DIR/"
 cp pom.xml "$INSTALL_DIR/"
 cp run-healthcheck.sh "$INSTALL_DIR/"
@@ -23,6 +23,25 @@ cp run-healthcheck.sh "$INSTALL_DIR/"
 
 chmod +x "$INSTALL_DIR/run-healthcheck.sh"
 
+echo ""
+echo "=== Application Configuration ==="
+
+read -p "Application URL: " APP_URL
+read -p "Username: " USERNAME
+read -s -p "Password: " PASSWORD
+echo ""
+
+mkdir -p "$INSTALL_DIR/src/test/resources"
+
+cat > "$INSTALL_DIR/src/test/resources/config.properties" <<EOF
+app.url=$APP_URL
+app.username=$USERNAME
+app.password=$PASSWORD
+EOF
+
+echo "Configuration saved."
+
+echo ""
 echo "Checking Maven..."
 
 MVN=$(command -v mvn)
@@ -35,16 +54,16 @@ fi
 echo "Using Maven: $MVN"
 
 # Cron job definition
-CRON_JOB="*/15 * * * * $INSTALL_DIR/run-healthcheck.sh >> $INSTALL_DIR/healthcheck.log 2>&1"
+CRON_JOB="*/15 * * * * /bin/bash $INSTALL_DIR/run-healthcheck.sh >> $INSTALL_DIR/healthcheck.log 2>&1"
 
 echo "Installing cron job..."
 
 TMP_CRON=$(mktemp)
 
-# Load existing crontab (if any)
+# Load existing crontab
 crontab -l 2>/dev/null > "$TMP_CRON" || true
 
-# Remove old version of our job
+# Remove previous healthcheck job
 grep -v "run-healthcheck.sh" "$TMP_CRON" > "${TMP_CRON}.new" || true
 
 # Add new job
@@ -57,9 +76,18 @@ crontab "${TMP_CRON}.new"
 rm -f "$TMP_CRON" "${TMP_CRON}.new"
 
 echo ""
+echo "========================================"
 echo "Installation completed successfully."
 echo "Installed to: $INSTALL_DIR"
-echo "Cron job:"
-echo "$CRON_JOB"
+echo "Configuration file:"
+echo "  $INSTALL_DIR/src/test/resources/config.properties"
 echo ""
-echo "Verify with: crontab -l"
+echo "Cron job:"
+echo "  $CRON_JOB"
+echo ""
+echo "Verify cron with:"
+echo "  crontab -l"
+echo ""
+echo "Run manually with:"
+echo "  cd $INSTALL_DIR && ./run-healthcheck.sh"
+echo "========================================"

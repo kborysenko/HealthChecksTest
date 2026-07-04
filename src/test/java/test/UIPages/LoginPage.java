@@ -1,6 +1,7 @@
 package test.UIPages;
 
 import com.codeborne.selenide.SelenideElement;
+import test.config.TestConfig;
 
 import java.time.Duration;
 
@@ -8,8 +9,6 @@ import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 
 public class LoginPage extends BasePage {
-
-    private static final String PAGE_URL = "https://stg-ui.adcint.com/login";
 
     private final SelenideElement EMAIL_INPUT = $("#email");
     private final SelenideElement PASSWORD_INPUT = $("#password");
@@ -25,7 +24,7 @@ public class LoginPage extends BasePage {
 
     @Override
     protected String createUrl() {
-        return PAGE_URL;
+        return TestConfig.getUrl();
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import test.UIPages.LoginPage;
+import test.config.TestConfig;
 
 import static test.UIPages.BasePage.open;
 
@@ -31,7 +32,10 @@ public abstract class SeleniumSetup {
         WebDriverRunner.setWebDriver(driver);
 
         open(LoginPage.class)
-                .login("fahosev830@nriza.com", ":3I{*SK0Le.6");
+                .login(
+                        TestConfig.getUsername(),
+                        TestConfig.getPassword()
+                );
     }
 
     @AfterMethod
