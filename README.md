@@ -1,65 +1,75 @@
-auto-awesome/
-│
-├── src/
-├── pom.xml
-├── run-healthcheck.sh        (macOS runner)
-├── install.sh                (macOS installer + cron setup)
-│
-├── run-healthcheck.ps1       (Windows runner)
-├── install.ps1               (Windows installer + scheduled task)
-│
-└── README.md
+HealthChecksTest
 
-🍏 macOS Setup (cron)
-1. Unzip project
-   unzip auto-awesome.zip
-   cd auto-awesome
-2. Make scripts executable
-      chmod +x install.sh
-      chmod +x run-healthcheck.sh
-3. Run installer ./install.sh
+Automated UI health check framework with scheduled execution and optional email notifications.
 
-This will:
+Prerequisites
 
-Copy project to:
-~/healthcheck-runner
+1. Install required tools via Homebrew:
 
-Create cron job:
-*/15 * * * * ~/healthcheck-runner/run-healthcheck.sh
+- brew install openjdk
+- brew install maven
+- brew install msmtp
 
-Log output to:
-~/healthcheck-runner/healthcheck.log
+2. Verify:
 
-🪟 Windows Setup (Task Scheduler)
-1. Unzip project
-   Expand-Archive .\auto-awesome.zip C:\temp\auto-awesome
-   cd C:\temp\auto-awesome
-2. Run installer (PowerShell as Admin)
-      powershell -ExecutionPolicy Bypass -File .\install.ps1
-3. What installer does
+- java -version
+- mvn -version
+- msmtp --version
 
-Copies project to:
-C:\Users\<YOU>\healthcheck-runner
+Launch Steps
 
-Creates scheduled task:
-HealthCheck
-Runs every 15 minutes
+1. Download and build project
 
-Executes: run-healthcheck.ps1
+2. Move to parent directory (if needed)
+If you opened project in IDE terminal:
+cd ..
 
-🧰 Requirements
-macOS
-Java (JDK 8+ / 11+ / 17+)
-Maven (mvn)
-cron enabled (default on macOS)
-Windows
-Java (JDK installed)
-Maven added to PATH
-PowerShell 5+
+3. Create project archive
+   zip -r HealthChecksTest.zip HealthChecksTest \
+   -x "HealthChecksTest/.git/*" \
+   -x "HealthChecksTest/target/*" \
+   -x "HealthChecksTest/build/*" \
+   -x "HealthChecksTest/allure-results/*" \
+   -x "HealthChecksTest/.idea/*" \
+   -x "HealthChecksTest/*.iml" \
+   -x "HealthChecksTest/.DS_Store"
 
-📄 Logs
-macOS
-~/healthcheck-runner/healthcheck.log
-Windows
-C:\Users\<YOU>\healthcheck-runner\healthcheck.log
+4. Unzip project to test folder
+   unzip HealthChecksTest.zip -d test-run
+
+5. Go to project folder
+   cd test-run/HealthChecksTest
+
+6. Run installer
+   ./install.sh
+
+7. Verify cron job
+
+- Check if cron was installed:
+- crontab -l
+
+8. Test email sending (optional)
+
+If email is enabled:
+echo "hello test" | msmtp --file=./.msmtprc your@gmail.com
+
+9. Check execution logs
+   cat /Users/user/healthcheck-runner/healthcheck.log
+
+======================
+
+What happens after setup
+
+Every 15 minutes cron will:
+
+- run UI tests
+- validate application health
+- optionally send email on failure
+
+Notes
+.msmtprc must have correct permissions:
+chmod 600 .msmtprc
+Gmail requires App Password, not normal password
+
+
 
