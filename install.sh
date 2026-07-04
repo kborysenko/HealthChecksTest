@@ -31,6 +31,25 @@ read -p "Username: " USERNAME
 read -s -p "Password: " PASSWORD
 echo ""
 
+echo ""
+echo "=== Email Notification (optional) ==="
+
+read -p "Enable email alerts? (y/n): " ENABLE_EMAIL
+
+EMAIL=""
+GMAIL_USER=""
+GMAIL_APP_PASS=""
+
+if [ "$ENABLE_EMAIL" = "y" ]; then
+    read -p "Send alerts to email (to): " EMAIL
+    read -p "Gmail address (from): " GMAIL_USER
+    read -s -p "Gmail App Password: " GMAIL_APP_PASS
+    echo ""
+fi
+
+# -------------------------
+# CONFIG FILE (APP)
+# -------------------------
 mkdir -p "$INSTALL_DIR/src/test/resources"
 
 cat > "$INSTALL_DIR/src/test/resources/config.properties" <<EOF
@@ -41,6 +60,47 @@ EOF
 
 echo "Configuration saved."
 
+# -------------------------
+# EMAIL CONFIG (.env)
+# -------------------------
+if [ "$ENABLE_EMAIL" = "y" ]; then
+cat > "$INSTALL_DIR/.env" <<EOF
+ENABLE_EMAIL=y
+EMAIL_TO=$EMAIL
+GMAIL_USER=$GMAIL_USER
+GMAIL_APP_PASS=$GMAIL_APP_PASS
+EOF
+fi
+
+# -------------------------
+# MSMTP CONFIG
+# -------------------------
+if [ "$ENABLE_EMAIL" = "y" ]; then
+cat > "$INSTALL_DIR/.msmtprc" <<EOF
+defaults
+auth on
+tls on
+tls_trust_file /etc/ssl/cert.pem
+logfile ~/.msmtp.log
+
+account gmail
+host smtp.gmail.com
+port 587
+
+auth on
+user $GMAIL_USER
+password $GMAIL_APP_PASS
+from $GMAIL_USER
+
+account default : gmail
+EOF
+
+chmod 600 "$INSTALL_DIR/.msmtprc"
+fi
+
+# -------------------------
+# MAVEN CHECK
+# -------------------------
 echo ""
 echo "Checking Maven..."
 
@@ -53,41 +113,53 @@ fi
 
 echo "Using Maven: $MVN"
 
-# Cron job definition
+# -------------------------
+# CRON JOB
+# -------------------------
 CRON_JOB="*/15 * * * * /bin/bash $INSTALL_DIR/run-healthcheck.sh >> $INSTALL_DIR/healthcheck.log 2>&1"
 
 echo "Installing cron job..."
 
 TMP_CRON=$(mktemp)
 
-# Load existing crontab
 crontab -l 2>/dev/null > "$TMP_CRON" || true
 
-# Remove previous healthcheck job
 grep -v "run-healthcheck.sh" "$TMP_CRON" > "${TMP_CRON}.new" || true
 
-# Add new job
 echo "$CRON_JOB" >> "${TMP_CRON}.new"
 
-# Install new crontab
 crontab "${TMP_CRON}.new"
 
-# Cleanup
 rm -f "$TMP_CRON" "${TMP_CRON}.new"
 
+# -------------------------
+# SUMMARY
+# -------------------------
 echo ""
 echo "========================================"
 echo "Installation completed successfully."
 echo "Installed to: $INSTALL_DIR"
-echo "Configuration file:"
+echo ""
+echo "Config file:"
 echo "  $INSTALL_DIR/src/test/resources/config.properties"
+
+if [ "$ENABLE_EMAIL" = "y" ]; then
+echo ""
+echo "Email config:"
+echo "  $INSTALL_DIR/.env"
+echo "  $INSTALL_DIR/.msmtprc (chmod 600 applied)"
+fi
+
 echo ""
 echo "Cron job:"
 echo "  $CRON_JOB"
+
 echo ""
 echo "Verify cron with:"
 echo "  crontab -l"
+
 echo ""
 echo "Run manually with:"
 echo "  cd $INSTALL_DIR && ./run-healthcheck.sh"
+
 echo "========================================"
