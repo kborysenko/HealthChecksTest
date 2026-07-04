@@ -5,6 +5,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 import org.assertj.core.api.Assertions;
 import org.openqa.selenium.By;
+import test.config.TestConfig;
 
 import java.time.Duration;
 
@@ -14,8 +15,6 @@ import static com.codeborne.selenide.Selenide.*;
 import static com.codeborne.selenide.WebDriverConditions.urlContaining;
 
 public class BrandsPage extends BasePage {
-
-    final String PAGE_URL = "https://stg-ui.adcint.com/ad-intelligence/brand";
 
     private final ElementsCollection REPORT_CARDS = $$("report-card");
     final SelenideElement SIDE_MENU = $("app-sidebar");
@@ -88,7 +87,7 @@ public class BrandsPage extends BasePage {
 
     @Override
     protected String createUrl() {
-        return PAGE_URL;
+        return TestConfig.getUrl() + "/brand";
     }
 
     @Override

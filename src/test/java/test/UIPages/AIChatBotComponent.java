@@ -73,11 +73,6 @@ public class AIChatBotComponent extends BrandsPage {
     }
 
     @Override
-    protected String createUrl() {
-        return PAGE_URL;
-    }
-
-    @Override
     protected boolean isValid() {
         return SIDE_MENU.shouldBe(visible, Duration.ofSeconds(20)).exists();
     }

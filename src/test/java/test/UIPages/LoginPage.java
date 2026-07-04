@@ -24,7 +24,7 @@ public class LoginPage extends BasePage {
 
     @Override
     protected String createUrl() {
-        return TestConfig.getUrl();
+        return TestConfig.getUrl() + "/login";
     }
 
     @Override
