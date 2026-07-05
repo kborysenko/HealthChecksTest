@@ -1,0 +1,47 @@
+name: UI Healthcheck
+
+# Runs the Docker image on a frequent schedule and on demand.
+# Configure repo secrets: APP_URL, APP_USERNAME, APP_PASSWORD,
+# and (optional) SLACK_WEBHOOK_URL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO.
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t ui-healthcheck .
+
+      - name: Run healthcheck
+        run: |
+          docker run --rm \
+            -v "$PWD/target:/app/target" \
+            -e APP_URL="${{ secrets.APP_URL }}" \
+            -e APP_USERNAME="${{ secrets.APP_USERNAME }}" \
+            -e APP_PASSWORD="${{ secrets.APP_PASSWORD }}" \
+            -e SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -e SMTP_HOST="${{ secrets.SMTP_HOST }}" \
+            -e SMTP_PORT="${{ secrets.SMTP_PORT }}" \
+            -e SMTP_USER="${{ secrets.SMTP_USER }}" \
+            -e SMTP_PASS="${{ secrets.SMTP_PASS }}" \
+            -e EMAIL_FROM="${{ secrets.EMAIL_FROM }}" \
+            -e EMAIL_TO="${{ secrets.EMAIL_TO }}" \
+            ui-healthcheck
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: healthcheck-artifacts
+          path: |
+            target/screenshots/
+            target/surefire-reports/
+            target/allure-results/
+            target/site/
+          if-no-files-found: ignore
+          retention-days: 7
