@@ -49,6 +49,7 @@ public class UIPerformanceTest extends SeleniumSetup {
 
         timer.shouldFinishWithin(TimeoutConfig.LOGIN_REDIRECT, "Login redirect to application");
     }
+    //TODO: add separate spec for UI Login / Logout test
 
     @Tag("healthcheck")
     @Test
