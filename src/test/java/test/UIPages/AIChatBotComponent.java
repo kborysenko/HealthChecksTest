@@ -1,6 +1,7 @@
 package test.UIPages;
 
 import com.codeborne.selenide.CollectionCondition;
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 import test.config.TestConfig;
@@ -41,6 +42,10 @@ public class AIChatBotComponent extends AuthenticatedPage {
     public AIChatBotComponent waitForAssistantResponse() {
         assistantMessages.shouldHave(CollectionCondition.sizeGreaterThan(0), Duration.ofSeconds(30));
         lastAssistantMessage.shouldBe(visible, Duration.ofSeconds(30));
+        return this;
+    }
+
+    public AIChatBotComponent waitForResponseNotValidRequest() {
         assistantMarkdown.shouldBe(visible, Duration.ofSeconds(30))
                 .shouldNotBe(empty)
                 .shouldNotHave(text("Thinking"))
@@ -50,6 +55,14 @@ public class AIChatBotComponent extends AuthenticatedPage {
 
     public AIChatBotComponent checkPageHasNoBlockingErrors() {
         assertNoBlockingErrors();
+        return this;
+    }
+
+    public AIChatBotComponent checkAssistantResponseContains(String expectedText) {
+        assistantMessages
+                .last()
+                .shouldHave(Condition.text(expectedText));
+
         return this;
     }
 

@@ -8,9 +8,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.chrome.ChromeOptions;
+import test.annotations.SkipLogin;
 import test.api.AuthApi;
 import test.api.AuthSession;
 import test.config.TestConfig;
+import org.junit.jupiter.api.TestInfo;
 
 /**
  * Shared lifecycle for every healthcheck.
@@ -42,7 +44,14 @@ public abstract class SeleniumSetup {
     protected String jwtToken;
 
     @BeforeEach
-    void logIn() {
+    void logIn(TestInfo testInfo) {
+
+        if (testInfo.getTestMethod()
+                .map(method -> method.isAnnotationPresent(SkipLogin.class))
+                .orElse(false)) {
+            return;
+        }
+
         authSession = new AuthApi().authenticate();
         openApplicationWithAuth();
     }

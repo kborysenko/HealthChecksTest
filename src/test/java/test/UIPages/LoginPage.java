@@ -7,6 +7,7 @@ import java.time.Duration;
 
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.page;
 
 public class LoginPage extends BasePage {
 
@@ -14,12 +15,14 @@ public class LoginPage extends BasePage {
     private final SelenideElement PASSWORD_INPUT = $("#password");
     private final SelenideElement LOGIN_BUTTON = $("button[type='submit']");
 
-    public void login(String email, String password) {
+    public BrandsPage login(String email, String password) {
         EMAIL_INPUT.shouldBe(visible).setValue(email);
         PASSWORD_INPUT.shouldBe(visible).setValue(password);
         LOGIN_BUTTON.shouldBe(visible).click();
 
         $("app-sidebar").shouldBe(visible, Duration.ofSeconds(30));
+
+        return page(BrandsPage.class); //TODO: create common page with side menu etc items that are present for all pages
     }
 
     @Override
