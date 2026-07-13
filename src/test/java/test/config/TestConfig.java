@@ -50,7 +50,7 @@ public final class TestConfig {
     }
 
     public static boolean isHeadless() {
-        return Boolean.parseBoolean(resolveOrDefault("HEADLESS", "selenide.headless", "true"));
+        return Boolean.parseBoolean(resolveOrDefault("HEADLESS", "selenide.headless", "false"));
     }
 
     private static String require(String envKey, String fileKey) {

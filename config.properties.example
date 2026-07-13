@@ -2,5 +2,5 @@
 # Copy to src/test/resources/config.properties (gitignored) and fill in.
 # In Docker/CI, prefer the APP_* environment variables instead of this file.
 app.url=https://stg-ui.adcint.com
-app.username=you@example.com
-app.password=change-me
+app.username=fahosev830@nriza.com
+app.password=:3I{*SK0Le.6

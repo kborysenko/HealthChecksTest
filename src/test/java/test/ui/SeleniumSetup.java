@@ -6,11 +6,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.openqa.selenium.Cookie;
 import org.openqa.selenium.chrome.ChromeOptions;
-import test.UIPages.LoginPage;
+import test.api.AuthApi;
+import test.api.AuthSession;
 import test.config.TestConfig;
-
-import static test.UIPages.BasePage.open;
 
 /**
  * Shared lifecycle for every healthcheck.
@@ -21,6 +21,8 @@ import static test.UIPages.BasePage.open;
  */
 @ExtendWith(ScreenshotOnFailure.class)
 public abstract class SeleniumSetup {
+
+    protected AuthSession authSession;
 
     @BeforeAll
     static void configureSelenide() {
@@ -37,10 +39,32 @@ public abstract class SeleniumSetup {
         Configuration.browserCapabilities = options;
     }
 
+    protected String jwtToken;
+
     @BeforeEach
     void logIn() {
-        open(LoginPage.class)
-                .login(TestConfig.getUsername(), TestConfig.getPassword());
+        authSession = new AuthApi().authenticate();
+        openApplicationWithAuth();
+    }
+
+    private void openApplicationWithAuth() {
+        Selenide.open(TestConfig.getUrl());
+
+        Selenide.webdriver()
+                .driver()
+                .getWebDriver()
+                .manage()
+                .addCookie(
+                        new Cookie(
+                                "sigma_authorization",
+                                authSession.getSigmaAuthorizationCookie(),
+                                "stg-ui.adcint.com",
+                                "/",
+                                null
+                        )
+                );
+
+        Selenide.refresh();
     }
 
     @AfterEach

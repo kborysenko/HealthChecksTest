@@ -64,7 +64,7 @@ public class BrandsPage extends AuthenticatedPage {
                 .$(REPORT_LINK)
                 .click();
 
-        webdriver().shouldHave(urlContaining("/ad-intelligence/"));
+        webdriver().shouldHave(urlContaining("/ad-intelligence/brand"));
 
         return this;
     }
